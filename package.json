@@ -1,0 +1,8 @@
+{
+  "name": "lonk",
+  "dependencies": {
+    "db-migrate": "^0.10.0-beta.15",
+    "db-migrate-pg": "^0.1.10",
+    "pg": "^6.1.0"
+  }
+}
