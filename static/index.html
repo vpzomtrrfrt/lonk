@@ -37,6 +37,16 @@
 					e.preventDefault();
 				};
 				document.getElementById('origin').textContent = location.origin+"/";
+				document.getElementById('lonkify').onclick = function(e) {
+					if(this.dataset.state === "tryagain") {
+						e.preventDefault();
+						this.textContent = "Lonkify!";
+						document.getElementById('hide').style.display = "initial";
+						document.getElementById('result').style.display = "none";
+						this.parentNode.reset();
+						this.dataset.state = "normal";
+					}
+				};
 			};
 		</script>
 	</head>
