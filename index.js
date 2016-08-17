@@ -1,6 +1,8 @@
 var http = require('http');
 var pg = require('pg');
 var querystring = require('querystring');
+var fs = require('fs');
+var multiparty = require('multiparty');
 
 var db = new pg.Client(process.env.DATABASE_URL);
 db.connect(function(err) {
@@ -36,17 +38,30 @@ var getFields = function(req, callback) {
 		url = url.substring(0, ind);
 	}
 	if(req.method === "POST") {
-		var body = '';
-		req.on('data', function(data) {
-			body += data;
-			if(body.length > 1e6) {
-				req.connection.destroy();
-			}
-		});
-		req.on('end', function() {
-			mergeInto(params, querystring.parse(body));
-			callback(null, params, url);
-		});
+		if("content-type" in req.headers && req.headers["content-type"].indexOf("multipart/form-data") === 0) {
+			// form-data
+			var form = new multiparty.Form();
+			form.parse(req, function(err, fields, files) {
+				for(var k in fields) {
+					params[k] = fields[k][0];
+				}
+				callback(null, params, url);
+			});
+		}
+		else {
+			// x-www-form-urlencoded
+			var body = '';
+			req.on('data', function(data) {
+				body += data;
+				if(body.length > 1e6) {
+					req.connection.destroy();
+				}
+			});
+			req.on('end', function() {
+				mergeInto(params, querystring.parse(body));
+				callback(null, params, url);
+			});
+		}
 	}
 	else {
 		callback(null, params, url);
@@ -140,14 +155,15 @@ var attemptCreateRandom = function(url, length, triesLeft, callback) {
 			}
 			return;
 		}
-		callback(result);
+		callback(null, result);
 	});
 };
 
 http.createServer(function(req, res) {
 	console.log(req.url);
 	if(req.url === "/") {
-		die(res, 200, "hi");
+		res.writeHead(200, {"Content-type": "text/html"});
+		fs.createReadStream("static/index.html").pipe(res);
 	}
 	else if(req.url.indexOf('/api') === 0) {
 		getFields(req, function(err, fields, url) {

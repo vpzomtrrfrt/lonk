@@ -1,0 +1,53 @@
+<html>
+	<head>
+		<title>Lonk</title>
+		<style type="text/css">
+			#form {
+				text-align: center;
+				position: absolute;
+				left: 50%;
+				top: 50vh;
+				transform: translate(-50%, -50%)
+			}
+			body {
+				position: relative
+			}
+		</style>
+		<script type="text/javascript">
+			window.onload = function() {
+				document.getElementById('form').onsubmit = function(e) {
+					var that = this;
+					var xhr = new XMLHttpRequest();
+					xhr.open(this.method, this.action);
+					var submitBtn = document.getElementById('lonkify');
+					xhr.onload = function() {
+						submitBtn.textContent = "Try another?";
+						submitBtn.disabled = false;
+						submitBtn.dataset.state = "tryagain";
+						document.getElementById('hide').style.display = "none";
+						var result = document.getElementById('result');
+						result.style.display = "initial";
+						var url = location.origin+"/"+this.response;
+						result.href = url;
+						result.textContent = url;
+					};
+					xhr.send(new FormData(this));
+					submitBtn.disabled = true;
+					submitBtn.textContent = "Lonkifying...";
+					e.preventDefault();
+				};
+				document.getElementById('origin').textContent = location.origin+"/";
+			};
+		</script>
+	</head>
+	<body>
+		<form id="form" method="post" action="/api/create">
+			<span id="hide">
+				<input type="url" name="url" placeholder="URL to shorten" /><br />
+				<span id="origin"></span><input type="text" name="custom" placeholder="???" /><br />
+			</span>
+			<a id="result" style="display: none"></a><br />
+			<button id="lonkify">Lonkify!</button>
+		</form>
+	</body>
+</html>
