@@ -34,6 +34,10 @@
 				border-radius: 5px;
 				padding: 2px
 			}
+			#problemBox {
+				background-color: red;
+				height: 2em;
+			}
 		</style>
 		<script type="text/javascript">
 			window.onload = function() {
@@ -42,16 +46,26 @@
 					var xhr = new XMLHttpRequest();
 					xhr.open(this.method, this.action);
 					var submitBtn = document.getElementById('lonkify');
+					var problemBox = document.getElementById('problemBox');
 					xhr.onload = function() {
-						submitBtn.textContent = "Try another?";
-						submitBtn.disabled = false;
-						submitBtn.dataset.state = "tryagain";
-						document.getElementById('hide').style.display = "none";
-						var result = document.getElementById('result');
-						result.style.display = "block";
-						var url = location.origin+"/"+this.response;
-						result.href = url;
-						result.textContent = url;
+						if(this.status === 200) {
+							problemBox.style.display = "none";
+							submitBtn.textContent = "Try another?";
+							submitBtn.disabled = false;
+							submitBtn.dataset.state = "tryagain";
+							document.getElementById('hide').style.display = "none";
+							var result = document.getElementById('result');
+							result.style.display = "block";
+							var url = location.origin+"/"+this.response;
+							result.href = url;
+							result.textContent = url;
+						}
+						else {
+							submitBtn.disabled = false;
+							submitBtn.textContent = "Lonkify!";
+							problemBox.textContent = this.response;
+							problemBox.style.display = "initial";
+						}
 					};
 					xhr.send(new FormData(this));
 					submitBtn.disabled = true;
@@ -74,6 +88,7 @@
 	</head>
 	<body>
 		<form id="form" method="post" action="/api/create">
+			<div id="problemBox" style="display: none"></div>
 			<span id="hide">
 				<input type="url" name="url" placeholder="URL to shorten" /><br />
 				<span class="tablething">
