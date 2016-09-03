@@ -198,6 +198,15 @@ http.createServer(function(req, res) {
 	}
 	else {
 		var id = req.url.substring(1);
+		var extra = "";
+		for(var i = 0; i < id.length; i++) {
+			if(ALLOWED_CHARS.indexOf(id[i]) === -1) {
+				// pass it on
+				extra = id.substring(i);
+				id = id.substring(0, i);
+				break;
+			}
+		}
 		db.query("SELECT * FROM links WHERE id=$1", [id], function(err, result) {
 			if(err) {
 				die(res, 500, "Internal Server Error");
@@ -208,7 +217,7 @@ http.createServer(function(req, res) {
 				die(res, 404, "Couldn't find that link.");
 				return;
 			}
-			var url = result.rows[0].url;
+			var url = result.rows[0].url+extra;
 			res.writeHead(301, {"Content-type": "text/html", "Location": url});
 			res.write('<html><head><title>Lonk</title></head><body><a href="'+url+'">Click here to continue</a></body></html>');
 			res.end();
