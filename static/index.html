@@ -37,16 +37,24 @@
 			#problemBox {
 				background-color: red;
 				height: 2em;
+				padding: .2em;
+				border-radius: 5px;
 			}
 		</style>
 		<script type="text/javascript">
 			window.onload = function() {
+				var submitBtn = document.getElementById('lonkify');
+				var problemBox = document.getElementById('problemBox');
+				function displayProblem(error) {
+					submitBtn.disabled = false;
+					submitBtn.textContent = "Lonkify!";
+					problemBox.textContent = error;
+					problemBox.style.display = "initial";
+				}
 				document.getElementById('form').onsubmit = function(e) {
 					var that = this;
 					var xhr = new XMLHttpRequest();
 					xhr.open(this.method, this.action);
-					var submitBtn = document.getElementById('lonkify');
-					var problemBox = document.getElementById('problemBox');
 					xhr.onload = function() {
 						if(this.status === 200) {
 							problemBox.style.display = "none";
@@ -61,11 +69,11 @@
 							result.textContent = url;
 						}
 						else {
-							submitBtn.disabled = false;
-							submitBtn.textContent = "Lonkify!";
-							problemBox.textContent = this.response;
-							problemBox.style.display = "initial";
+							displayProblem(this.response);
 						}
+					};
+					xhr.onerror = function(e) {
+						displayProblem("Could not connect to server.");
 					};
 					xhr.send(new FormData(this));
 					submitBtn.disabled = true;
@@ -83,6 +91,7 @@
 						this.dataset.state = "normal";
 					}
 				};
+				submitBtn.disabled = false;
 			};
 		</script>
 	</head>
