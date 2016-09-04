@@ -15,9 +15,15 @@ db.connect(function(err) {
 var PORT = process.env.PORT || 5555;
 
 var ALLOWED_CHARS = charsFrom('a', 'z')+charsFrom('A', 'Z')+charsFrom('0', '9')+"-_.";
+var RESERVED_IDS = ["api", "about"];
 
 var die = function(res, err, data, type) {
 	if(!type) type = "text/plain";
+	if(!data) {
+		if(err === 500) data = "Internal Server Error";
+		else if(err === 404) data = "404 Not Found";
+		else data = "Error "+err;
+	}
 	res.writeHead(err, {"Content-type": type});
 	res.write(data+"");
 	res.end();
@@ -87,6 +93,9 @@ var attemptCreate = function(url, id, random, callback) {
 		callback = random;
 		attemptCreate(url, id, false, callback);
 		return;
+	}
+	if(RESERVED_IDS.indexOf(id) > -1) {
+		callback("Already taken");
 	}
 	for(var i = 0; i < id.length; i++) {
 		if(ALLOWED_CHARS.indexOf(id[i]) === -1) {
@@ -191,10 +200,36 @@ http.createServer(function(req, res) {
 					});
 				}
 			}
+			else if(url === "/api/analytics") {
+				if(!("id" in fields)) {
+					die(res, 400, "ID missing");
+					return;
+				}
+				var tr = {};
+				tr.clicks = {};
+				db.query("SELECT COUNT(*) AS clicks FROM visits WHERE id=$1", [fields.id], function(err, result) {
+					if(err) {
+						die(res, 500);
+						console.error(err);
+						return;
+					} 
+					tr.clicks.total = parseInt(result.rows[0].clicks);
+					die(res, 200, JSON.stringify(tr), "application/json");
+				});
+			}
 			else {
 				die(res, 404, "API call not found.");
 			}
 		});
+	}
+	else if(req.url.indexOf('/about') === 0) {
+		if(req.url[req.url.length-1] === "+") {
+			res.writeHead(200, {"Content-type": "text/html"});
+			fs.createReadStream("static/analytics.html").pipe(res);
+		}
+		else {
+			die(res, 404, "404 Not Found");
+		}
 	}
 	else {
 		var id = req.url.substring(1);

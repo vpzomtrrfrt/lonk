@@ -1,0 +1,36 @@
+<html>
+	<head>
+		<title>Lonk Analytics</title>
+		<script type="text/javascript">
+			function plural(amount, name) {
+				var tr = amount+" "+name;
+				if(tr != 1) {
+					tr += "s";
+				}
+				return tr;
+			}
+			window.onload = function() {
+				var id = location.href;
+				var ind = id.lastIndexOf("/");
+				id = id.substring(ind+1, id.length-1);
+
+				var xhr = new XMLHttpRequest();
+				xhr.onload = function() {
+					var j = JSON.parse(this.response);
+					var url = location.protocol+"//"+location.host+"/"+id;
+
+					var a = document.getElementById('link');
+					a.href = url;
+					a.textContent = url;
+					document.getElementById('clicks').textContent = plural(j.clicks.total, "click");
+				};
+				xhr.open("GET", "/api/analytics?id="+id);
+				xhr.send();
+			};
+		</script>
+	</head>
+	<body style="text-align: center">
+		<a id="link"></a><br />
+		<span id="clicks"></span>
+	</body>
+</html>
