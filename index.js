@@ -218,8 +218,9 @@ http.createServer(function(req, res) {
 				return;
 			}
 			var ip = req.connection.remoteAddress;
-			if(req.headers["x-forwarded-for"]) {
-				ip = req.headers["x-forwarded-for"];
+			var fwd = req.headers["x-forwarded-for"];
+			if(fwd) {
+				ip = fwd.split(",")[0];
 			}
 			db.query("INSERT INTO visits (id, browser, ip, suffix) VALUES ($1, $2, $3, $4)", [id, req.headers["user-agent"], ip, extra], function(err, result) {
 				if(err) {
