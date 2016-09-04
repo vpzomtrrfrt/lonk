@@ -217,6 +217,16 @@ http.createServer(function(req, res) {
 				die(res, 404, "Couldn't find that link.");
 				return;
 			}
+			var ip = req.connection.remoteAddress;
+			if(req.headers["x-forwarded-for"]) {
+				ip = req.headers["x-forwarded-for"];
+			}
+			db.query("INSERT INTO visits (id, browser, ip, suffix) VALUES ($1, $2, $3, $4)", [id, req.headers["user-agent"], ip, extra], function(err, result) {
+				if(err) {
+					console.error(err);
+					return;
+				}
+			});
 			var url = result.rows[0].url+extra;
 			res.writeHead(301, {"Content-type": "text/html", "Location": url});
 			res.write('<html><head><title>Lonk</title></head><body><a href="'+url+'">Click here to continue</a></body></html>');
