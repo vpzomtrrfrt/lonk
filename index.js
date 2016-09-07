@@ -171,6 +171,9 @@ var attemptCreateRandom = function(domain, url, length, triesLeft, callback) {
 http.createServer(function(req, res) {
 	console.log(req.url);
 	var domain = req.headers.host;
+	if(domain.indexOf("www.") === 0) {
+		domain = domain.substring(4);
+	}
 	console.log(domain);
 	if(req.url === "/") {
 		res.writeHead(200, {"Content-type": "text/html"});
