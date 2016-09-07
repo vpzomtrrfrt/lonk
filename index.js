@@ -88,10 +88,10 @@ function charsFrom(start, end) {
 	return tr;
 }
 
-var attemptCreate = function(url, id, random, callback) {
+var attemptCreate = function(domain, url, id, random, callback) {
 	if(arguments.length === 3) {
 		callback = random;
-		attemptCreate(url, id, false, callback);
+		attemptCreate(domain, url, id, false, callback);
 		return;
 	}
 	if(RESERVED_IDS.indexOf(id) > -1) {
@@ -103,7 +103,7 @@ var attemptCreate = function(url, id, random, callback) {
 			return;
 		}
 	}
-	db.query("INSERT INTO links (url, id, random) VALUES ($1, $2, $3)", [url, id, !!random], function(err, result) {
+	db.query("INSERT INTO links (domain, url, id, random) VALUES ($4, $1, $2, $3)", [url, id, !!random, domain], function(err, result) {
 		if(err) {
 			if(err.code === "23505") {
 				callback("Already taken");
@@ -126,16 +126,16 @@ var randomString = function(length) {
 	return tr;
 };
 
-var attemptCreateRandom = function(url, length, triesLeft, callback) {
-	if(arguments.length === 2) {
+var attemptCreateRandom = function(domain, url, length, triesLeft, callback) {
+	if(arguments.length === 3) {
 		callback = length;
-		db.query("SELECT * FROM links WHERE url=$1 AND random=true", [url], function(err, result) {
+		db.query("SELECT * FROM links WHERE url=$1 AND random=true AND domain=$2", [url, domain], function(err, result) {
 			if(err) {
 				die(res, 500, err);
 				return;
 			}
 			if(result.rows.length === 0) {
-				attemptCreateRandom(url, 1, callback);
+				attemptCreateRandom(domain, url, 1, callback);
 			}
 			else {
 				callback(null, result.rows[0].id);
@@ -143,13 +143,13 @@ var attemptCreateRandom = function(url, length, triesLeft, callback) {
 		});
 		return;
 	}
-	if(arguments.length === 3) {
+	if(arguments.length === 4) {
 		callback = triesLeft;
-		attemptCreateRandom(url, length, Math.pow(ALLOWED_CHARS.length, length-1), callback);
+		attemptCreateRandom(domain, url, length, Math.pow(ALLOWED_CHARS.length, length-1), callback);
 		return;
 	}
 	var str = randomString(length);
-	attemptCreate(url, str, true, function(err, result) {
+	attemptCreate(domain, url, str, true, function(err, result) {
 		if(err) {
 			if(err != "Already taken") {
 				callback(err);
@@ -157,10 +157,10 @@ var attemptCreateRandom = function(url, length, triesLeft, callback) {
 			}
 			// try again
 			if(triesLeft > 1) {
-				attemptCreateRandom(url, length, triesLeft-1, callback);
+				attemptCreateRandom(domain, url, length, triesLeft-1, callback);
 			}
 			else {
-				attemptCreateRandom(url, length+1, callback);
+				attemptCreateRandom(domain, url, length+1, callback);
 			}
 			return;
 		}
@@ -170,6 +170,8 @@ var attemptCreateRandom = function(url, length, triesLeft, callback) {
 
 http.createServer(function(req, res) {
 	console.log(req.url);
+	var domain = req.headers.host;
+	console.log(domain);
 	if(req.url === "/") {
 		res.writeHead(200, {"Content-type": "text/html"});
 		fs.createReadStream("static/index.html").pipe(res);
@@ -182,7 +184,7 @@ http.createServer(function(req, res) {
 					return;
 				}
 				if(fields.custom) {
-					attemptCreate(fields.url, fields.custom, function(err, result) {
+					attemptCreate(domain, fields.url, fields.custom, function(err, result) {
 						if(err) {
 							die(res, 400, err);
 							return;
@@ -191,7 +193,7 @@ http.createServer(function(req, res) {
 					});
 				}
 				else {
-					attemptCreateRandom(fields.url, function(err, result) {
+					attemptCreateRandom(domain, fields.url, function(err, result) {
 						if(err) {
 							die(res, 500, err);
 							return;
@@ -207,7 +209,7 @@ http.createServer(function(req, res) {
 				}
 				var tr = {};
 				tr.clicks = {};
-				db.query("SELECT COUNT(*) AS clicks FROM visits WHERE id=$1", [fields.id], function(err, result) {
+				db.query("SELECT COUNT(*) AS clicks FROM visits WHERE id=$1 AND domain=$2", [fields.id, domain], function(err, result) {
 					if(err) {
 						die(res, 500);
 						console.error(err);
@@ -252,21 +254,38 @@ http.createServer(function(req, res) {
 				die(res, 404, "Couldn't find that link.");
 				return;
 			}
-			var ip = req.connection.remoteAddress;
-			var fwd = req.headers["x-forwarded-for"];
-			if(fwd) {
-				ip = fwd.split(",")[0];
-			}
-			db.query("INSERT INTO visits (id, browser, ip, suffix) VALUES ($1, $2, $3, $4)", [id, req.headers["user-agent"], ip, extra], function(err, result) {
-				if(err) {
-					console.error(err);
-					return;
+			var success = false;
+			for(var i = 0; i < result.rows.length; i++) {
+				if(result.rows[i].domain === domain) {
+					var ip = req.connection.remoteAddress;
+					var fwd = req.headers["x-forwarded-for"];
+					if(fwd) {
+						ip = fwd.split(",")[0];
+					}
+					db.query("INSERT INTO visits (id, browser, ip, suffix, domain) VALUES ($1, $2, $3, $4, $5)", [id, req.headers["user-agent"], ip, extra, domain], function(err, result) {
+						if(err) {
+							console.error(err);
+							return;
+						}
+					});
+					var url = result.rows[0].url+extra;
+					res.writeHead(301, {"Content-type": "text/html", "Location": url});
+					res.write('<html><head><title>Lonk</title></head><body><a href="'+url+'">Click here to continue</a></body></html>');
+					res.end();
+					success = true;
+					break;
 				}
-			});
-			var url = result.rows[0].url+extra;
-			res.writeHead(301, {"Content-type": "text/html", "Location": url});
-			res.write('<html><head><title>Lonk</title></head><body><a href="'+url+'">Click here to continue</a></body></html>');
-			res.end();
+			}
+			if(!success) {
+				var tr = "<html><head><title>Link disambiguation</title></head><body>";
+				tr += "Couldn't find that link.  Did you mean:<br/>";
+				for(var i = 0; i < result.rows.length; i++) {
+					var url = "http://"+result.rows[i].domain+"/"+id;
+					tr += "<a href=\""+url+"\">"+url+"</a><br/>";
+				}
+				tr += "</body></html>";
+				die(res, 404, tr, "text/html");
+			}
 		});
 	}
 }).listen(PORT);
