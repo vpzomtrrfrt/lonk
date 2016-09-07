@@ -89,7 +89,7 @@ function charsFrom(start, end) {
 }
 
 var attemptCreate = function(domain, url, id, random, callback) {
-	if(arguments.length === 3) {
+	if(arguments.length === 4) {
 		callback = random;
 		attemptCreate(domain, url, id, false, callback);
 		return;
