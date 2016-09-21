@@ -5,7 +5,7 @@
 		<meta name="google-site-verification" content="{{GOOGLE_VERIFICATION}}" />
 		<meta name="adbit-site-verification" content="{{ADBIT_VERIFICATION}}" />
 		<style type="text/css">
-			#form {
+			#mainarea {
 				text-align: center;
 				position: absolute;
 				top: 50vh;
@@ -98,16 +98,19 @@
 		</script>
 	</head>
 	<body>
-		<form id="form" method="post" action="/api/create">
-			<div id="problemBox" style="display: none"></div>
-			<span id="hide">
-				<input type="url" name="url" placeholder="URL to shorten" /><br />
-				<span class="tablething">
-					<span id="origin"></span><input type="text" name="custom" placeholder="???" /><br />
+		<div id="mainarea">
+			<form id="form" method="post" action="/api/create">
+				<div id="problemBox" style="display: none"></div>
+				<span id="hide">
+					<input type="url" name="url" placeholder="URL to shorten" /><br />
+					<span class="tablething">
+						<span id="origin"></span><input type="text" name="custom" placeholder="???" /><br />
+					</span>
 				</span>
-			</span>
-			<a id="result" style="display: none"></a>
-			<button id="lonkify">Lonkify!</button>
-		</form>
+				<a id="result" style="display: none"></a>
+				<button id="lonkify">Lonkify!</button>
+			</form>
+			{{UNDER_FORM_HTML}}
+		</div>
 	</body>
 </html>

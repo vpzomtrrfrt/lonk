@@ -179,8 +179,14 @@ http.createServer(function(req, res) {
 		res.writeHead(200, {"Content-type": "text/html"});
 		fs.readFile("static/index.html", function(err, content) {
 			content = content.toString();
-			for(var key in process.env) {
-				content = content.replace("{{"+key+"}}", process.env[key]);
+			var ex = /\{\{[A-Z_]*\}\}/;
+			while(true) {
+				var x = ex.exec(content);
+				if(!x) break;
+				var key = x[0].substring(2, x[0].length-2);
+				var result = process.env[key];
+				if(!result) result = "";
+				content = content.substring(0, x.index)+result+content.substring(x.index+x[0].length);
 			}
 			res.write(content);
 			res.end();
