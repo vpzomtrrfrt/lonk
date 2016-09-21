@@ -177,7 +177,14 @@ http.createServer(function(req, res) {
 	console.log(domain);
 	if(req.url === "/") {
 		res.writeHead(200, {"Content-type": "text/html"});
-		fs.createReadStream("static/index.html").pipe(res);
+		fs.readFile("static/index.html", function(err, content) {
+			content = content.toString();
+			for(var key in process.env) {
+				content = content.replace("{{"+key+"}}", process.env[key]);
+			}
+			res.write(content);
+			res.end();
+		});
 	}
 	else if(req.url.indexOf('/api') === 0) {
 		getFields(req, function(err, fields, url) {
