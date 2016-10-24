@@ -5,5 +5,8 @@
     "db-migrate-pg": "^0.1.10",
     "multiparty": "^4.1.2",
     "pg": "^6.1.0"
+  },
+  "scripts": {
+    "start": "node index.js"
   }
 }
