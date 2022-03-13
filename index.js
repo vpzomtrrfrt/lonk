@@ -4,12 +4,13 @@ var querystring = require('querystring');
 var fs = require('fs');
 var multiparty = require('multiparty');
 
-var db = new pg.Client(process.env.DATABASE_URL);
+var db = new pg.Client({connectionString: process.env.DATABASE_URL});
 db.connect(function(err) {
 	if(err) {
 		console.error(err);
 		process.exit();
 	}
+	console.log("connected");
 });
 
 var PORT = process.env.PORT || 5555;
@@ -131,7 +132,8 @@ var attemptCreateRandom = function(domain, url, length, triesLeft, callback) {
 		callback = length;
 		db.query("SELECT * FROM links WHERE url=$1 AND random=true AND domain=$2", [url, domain], function(err, result) {
 			if(err) {
-				die(res, 500, err);
+				console.error(err);
+				callback("Error 500");
 				return;
 			}
 			if(result.rows.length === 0) {

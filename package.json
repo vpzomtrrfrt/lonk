@@ -1,10 +1,10 @@
 {
   "name": "lonk",
   "dependencies": {
-    "db-migrate": "^0.10.0-beta.23",
-    "db-migrate-pg": "^0.1.10",
+    "db-migrate": "^0.11.13",
+    "db-migrate-pg": "^1.2.2",
     "multiparty": "^4.1.2",
-    "pg": "^6.1.0"
+    "pg": "^8.7.3"
   },
   "scripts": {
     "start": "node index.js"
