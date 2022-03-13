@@ -135,7 +135,7 @@ var attemptCreateRandom = function(domain, url, length, triesLeft, callback) {
 				return;
 			}
 			if(result.rows.length === 0) {
-				attemptCreateRandom(domain, url, 4, callback);
+				attemptCreateRandom(domain, url, 5, callback);
 			}
 			else {
 				callback(null, result.rows[0].id);
