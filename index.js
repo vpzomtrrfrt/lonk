@@ -4,7 +4,7 @@ var querystring = require('querystring');
 var fs = require('fs');
 var multiparty = require('multiparty');
 
-var db = new pg.Client({connectionString: process.env.DATABASE_URL});
+var db = new pg.Client({connectionString: process.env.DATABASE_URL, ssl: {rejectUnauthorized: false}});
 db.connect(function(err) {
 	if(err) {
 		console.error(err);
